@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport" />
+                <meta name="keywords" content="乖離性,ミリオンアーサー,攻略,まとめ,wiki,傭兵,富豪,盗賊,歌姫,拡散性,おすすめ,乖離性MA" />
+                        <meta name="description" content="『乖離性ミリオンアーサー』(iOS/Android)の攻略情報サイトです。当サイトでは公式のデータをもとに、本作の攻略を展開していきます。" />
+                <meta name="google-translate-customization" content="efbfbcc8b8348fad-b52446dc8c0f3d46-g7d60db5972a111b0-10"></meta>        <title>乖離性ミリオンアーサー攻略wiki</title>
+        <link href="/theme/famitsu/favicon.ico?1403773995" type="image/x-icon" rel="icon" /><link href="/theme/famitsu/favicon.ico?1403773995" type="image/x-icon" rel="shortcut icon" /><link rel="stylesheet" type="text/css" href="http://cdn.wiki.famitsu.com/css/jquery.notifyBar.css?1402467236" /><link rel="stylesheet" type="text/css" href="http://cdn.wiki.famitsu.com/css/font-awesome.min.css?1401687300" /><link rel="stylesheet" type="text/css" href="http://cdn.wiki.famitsu.com/theme/famitsu/css/style.css?1420618913" /><link rel="stylesheet" type="text/css" href="http://cdn.wiki.famitsu.com/theme/famitsu/kairi/css/game.css?1420540849" /><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/jquery-1.11.0.min.js?1401687304"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/jquery.cookie.js?1407736551"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/jquery.notifyBar.js?1402467236"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/jquery.tablesorter.min.js?1405332711"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/jquery.metadata.js?1416195169"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/jquery.autosize.min.js?1411094702"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/js/common.js?1419235920"></script><script type="text/javascript" src="http://cdn.wiki.famitsu.com/theme/famitsu/kairi/js/game.js?1416221023"></script><script type="text/javascript">
+
+// コメントをリフレッシュ表示するか
+var isRefresh = false;
+
+// いいね実行
+function clickLike() {
+    var obj = $(this);
+    var id = obj.parents('.comment-list > li').data('id');
+    var count = obj.children('.count');
+
+    if (obj.hasClass('push-on-btn')) {
+        // 押下済み
+        return;
+    }
+
+    $.ajax({
+        url: '/kairi/-/comments/like',
+        data: {id: id},
+        type: 'post',
+        dataType: 'json',
+        success: function(data) {
+            if (data.success) {
+                obj.addClass('push-on-btn');
+                count.text(data.count);
+            }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            alert('通信に失敗しました。\n' + textStatus);
+        },
+    });
+}
+
+// 返信実行
+function clickReply() {
+    var obj = $(this);
+    var number = obj.parents('.comment-list > li').data('number');
+
+    // コメント入力欄を開く (common.js から拝借)
+    $('.obj-comment-submit-form').fadeIn(200);
+    $('.obj-comment-submit-form-pre').fadeOut(0);
+
+    // フォーカスしてコメント番号挿入
+    $('.obj-comment-submit-form textarea').focus().val('>>' + number + '\n');
+}
+
+// 返信先表示
+function clickNumber() {
+    var obj = $(this);
+    var target = obj.parent('.number');
+    var number = target.data('number');
+    var reply = target.children('.reply-area');
+    var comment = reply.children('.reply-comment');
+
+    // すでに開いている
+    if (reply.css('display') == 'block') {
+        // 閉じるだけ
+        reply.fadeOut(100);
+        return false;
+    }
+
+    // 返信先欄を表示
+    comment.text('読み込み中…');
+    reply.fadeIn(200);
+
+    $.ajax({
+        url: '/kairi/-/comments/number/page_id:8432',
+        data: {number: number},
+        dataType: 'html',
+        success: function(data) {
+            var append = $(data);
+
+            // 返信先番号
+            append.find('.number a').click(clickNumber);
+
+            // 返信先の閉じるボタン
+            append.find('.pop-up-close-btn').click(clickCloseReply);
+
+            comment.html(append);
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            alert('通信に失敗しました。\n' + textStatus);
+        },
+    });
+
+    return false;
+}
+
+// 返信先を閉じる
+function clickCloseReply() {
+    $(this).parent('.reply-area').fadeOut(100);
+}
+
+// コメントメッセージ
+function clickCommentMessage() {
+    $(this).removeClass('hidden');
+}
+
+// コメント表示
+function refreshComment(data) {
+    var target = $('.comment-list');
+    var more = $('#comment-more');
+    var append = $(data.body);
+
+    // いいねボタン
+    append.find('.like a').click(clickLike);
+
+    // 返信ボタン
+    append.find('.reply a').click(clickReply);
+
+    // 返信先番号
+    append.find('.number a').click(clickNumber);
+
+    // 返信先の閉じるボタン
+    append.find('.pop-up-close-btn').click(clickCloseReply);
+
+    // コメントメッセージ
+    append.find('.comment.hidden').click(clickCommentMessage);
+
+    if (isRefresh) {
+        // コメントリフレッシュ
+        target.empty();
+        isRefresh = false;
+    }
+
+    target.append(append);
+
+    // もっと見るフラグ
+    if (data.show_more) {
+        more.children('.btn').text('もっと見る');
+        more.show();
+    } else {
+        more.hide();
+    }
+}
+
+// コメント投稿
+function submitComment(obj) {
+    var textarea = $(obj).find('textarea');
+    var submit = $(obj).find('input[type=submit]');
+
+    if (textarea[0]) {
+        // 入力チェック
+        var value = textarea.val();
+
+        if (value.match(/^\s*$/) || value.match(/^>>\d+\n*$/)) {
+            return false;
+        }
+
+        if (value.length > 2000) {
+            alert('コメントが長すぎます');
+            return false;
+        }
+    }
+
+    if (typeof ga == 'function') {
+        var sid = 'nidb6drl8icq4i0bn8md1oebm6';
+        ga('send', 'event', 'comment', 'submit', sid);
+    }
+
+    var submitLabel = submit.val();
+    submit.val('コメントを送信中…').attr('disabled', 'disabled');
+
+    // FormData が使える場合
+    if(window.FormData) {
+        var form = $(obj)[0];
+        var formData = new FormData(form);
+
+        $.ajax({
+            url: '/kairi/-/comments/add/page_id:8432',
+            data: formData,
+            type: 'post',
+            dataType: 'json',
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                if (data.success) {
+                    // コメントリフレッシュ読み込み
+                    isRefresh = true;
+
+                    // コメント表示
+                    refreshComment(data);
+
+                    // 入力欄をクリア
+                    $(obj).find('input[type=text]').val('');
+                    $(obj).find('textarea').val('');
+
+                    // 画像添付をクリア
+                    uploadImageCancel();
+
+                    // コメント入力欄を閉じる
+                    if ($('.obj-comment-submit-form-pre')[0]) {
+                        $('.obj-comment-submit-form').fadeOut(0);
+                        $('.obj-comment-submit-form-pre').fadeIn(200);
+                    }
+                } else {
+                    alert(data.message);
+                }
+
+                submit.val(submitLabel).removeAttr('disabled');
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert('通信に失敗しました。\n' + textStatus);
+            },
+        });
+
+        return false;
+    }
+}
+
+// コメント読み込み
+function loadComment(button) {
+    var obj = $(button);
+    var target = $('.comment-list');
+
+    if (!target.data('loading')) {
+        target.data('loading', true);
+
+        var btnLabel = obj.children('.btn').text();
+        obj.children('.btn').text('読み込み中…');
+
+        var last_id = 0;
+
+        if (!isRefresh) {
+            // 一番下のコメントIDを取得
+            last_id = target.find('> li').filter(':last').data('id');
+        }
+
+        $.ajax({
+            url: '/kairi/-/comments/more/page_id:8432',
+            data: {last_id: last_id},
+            dataType: 'json',
+            success: function(data) {
+                target.data('loading', false);
+                obj.children('.btn').text(btnLabel);
+
+                // コメント表示
+                refreshComment(data);
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert('通信に失敗しました。\n' + textStatus);
+            },
+        });
+    }
+}
+
+$(function() {
+    // いいねボタン
+    $('.like a').click(clickLike);
+
+    // 返信ボタン
+    $('.reply a').click(clickReply);
+
+    // 返信先番号
+    $('.number a').click(clickNumber);
+
+    // 返信先の閉じるボタン
+    $('.pop-up-close-btn').click(clickCloseReply);
+
+    // コメントメッセージ
+    $('.comment.hidden').click(clickCommentMessage);
+
+    // コメントリロード
+    $('#comment-reload').click(function() {
+        // コメントリフレッシュ読み込み
+        isRefresh = true;
+
+        // コメント読み込み
+        loadComment(this);
+    });
+
+    // コメント追加読み込み
+    $('#comment-more').click(function() {
+        // コメント読み込み
+        loadComment(this);
+    });
+
+    // ネタバレ確認
+    var status = loadCookie('spoiler-status', 8432);
+
+    if (status) {
+        // 承諾済み
+        $('.hide-spoiler').show();
+    } else {
+        $('#spoiler-confirm').show();
+    }
+
+    // ネタバレ承諾
+    $('#agree-spoiler').click(function() {
+        $('#spoiler-confirm').hide();
+        $('.hide-spoiler').show();
+
+        saveCookie('spoiler-status', 8432, true, 30);
+    });
+});
+
+</script>
+                <script type="text/javascript">
+        $(function() {
+            
+            var flash_message = '';
+            var auth_message = '';
+            var login_id = 0;
+            
+
+            // メッセージ表示
+            var messages = [];
+
+            if (flash_message.length > 0) {
+                messages.push(flash_message);
+            }
+
+            if (auth_message.length > 0) {
+                messages.push(auth_message);
+            }
+
+            var showMessage = function() {
+                if (messages.length == 0) {
+                    return;
+                }
+
+                var message = messages.shift();
+                var cssClass = 'warning';
+
+                if (message.match(/success/i)) {
+                    cssClass = 'success';
+                }
+
+                if (message.match(/error/i)) {
+                    cssClass = 'error';
+                }
+
+                $.notifyBar({
+                    html: message,
+                    cssClass: cssClass,
+                    onHide: showMessage,
+                });
+            };
+
+            setTimeout(showMessage, 300);
+
+            // ログインステータス取得
+            $.ajax({
+                url: 'https://www.reinforce-inc.jp/login/users/status',
+                dataType: 'jsonp',
+                success: function(data) {
+                    if (data.id != login_id) {
+                        $.ajax({
+                            url: '/users/status',
+                            data: {id: data.id, key: data.key},
+                            type: 'post',
+                            dataType: 'json',
+                            success: function(data) {
+                                if (!data.success) {
+                                    alert(data.message);
+                                }
+                            },
+                            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                                //alert('通信に失敗しました。\n' + textStatus);
+                            },
+                        });
+                    }
+
+                    if (data.loggedin) {
+                        $('#pre-login').html($('<a>', {'href': '/users/logout'}).text('ログアウト'));
+                        $('#login').html($('<a>', {'href': '/users/logout', 'class':'btn'}).text('ログアウト'));
+                    } else {
+                        $('#pre-login').html($('<a>', {'href': '/users/login'}).text('管理者ログイン'));
+                        $('#login').html($('<a>', {'href': '/users/login', 'class':'btn'}).text('ログイン'));
+                    }
+                },
+            });
+        });
+        </script>
+        <!--[if lte IE 8]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-48941378-1', 'famitsu.com');
+  ga('send', 'pageview');
+
+</script>            </head>
+    <body>
+        <div id="container" class="fixed">
+                        <div id="content" class="layout-double-col">
+                <div id="content-inner">
+                    <aside>
+                        <div id="ad-side">
+                            <div id="ad-left-side"></div>
+                            <div id="ad-right-side"></div>
+                        </div>
+                    </aside>
+                    <div id="media-only-hedaer">
+                        <div id="logo">
+	<a class="famitsu-com logo" href="http://www.famitsu.com/" title="ファミ通.com">ファミ通.com</a>
+	<a class="connect-on logo" href="http://www.famitsu.com/online">コネクト！オン.com</a>
+	<a class="famitsu-app logo" href="http://app.famitsu.com/">ファミ通App</a>
+</div>                    </div>
+                                        <aside>
+                        <div id="ad-global-menu-lower">
+                            <div class="inner">
+                                <script type="text/javascript"><!--
+google_ad_client = "ca-pub-3166280997155124";
+/* ファミ通wiki_ミリオンアーサー_PC_728×90① */
+google_ad_slot = "7580569672";
+google_ad_width = 728;
+google_ad_height = 90;
+//-->
+</script>
+<script type="text/javascript"
+src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>                            </div>
+                        </div>
+                    </aside>
+                                        <div id="content-header">
+                        <div class="container clearfix">
+                            <header>
+                                <div id="content-main-sign-board" class="front-page">
+    <div id="content-main-sign-board-inner">
+        <h1 class="main-title"><a href="http://wiki.famitsu.com/kairi/">乖離性ミリオンアーサー攻略wiki</a></h1>
+    </div>
+</div>                            </header>
+                        </div>
+                    </div>
+                    <div id="content-body">
+                        <div class="container clearfix">
+    <div id="topic-path" class="clearfix">
+        <ul><li class="first">TOP</li></ul>    </div>
+    <div id="main-content-wrap" class="clearfix">
+        <div id="main-content">
+            <div class="inner">
+                <div id="wiki-container">
+                    
+
+
+
+
+<article>
+    <section>
+        <div id="wiki-content" class="content-wrap">
+                        <aside>
+                <div id="ad-wiki-content-upper">
+                    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js
+"></script>
+<!-- responsive_homepage -->
+<!-- ファミ通wiki_ミリオンアーサー_PC_728×90② -->
+<ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-3166280997155124"
+    data-ad-slot="9057277552"
+data-ad-format="horizontal"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({}); </script>                </div>
+            </aside>
+                                    <div class="social-btn">
+    <div class="social-btn-wrpper clearfix">
+        <ul class="social-btn-list fr clearfix">
+            <li>
+                <div class="twitter-social-btn">
+                    <a href="https://twitter.com/share" class="twitter-share-button" data-via="" data-url="http://wiki.famitsu.com/kairi/" data-lang="ja">ツイート</a>
+                </div>
+            </li>
+            <li>
+                <div class="facebook-social-btn">
+                    <div class="fb-like" data-send="false" data-layout="button_count" data-width="450" data-show-faces="true" data-font="arial"></div>
+                </div>
+            </li>
+            <li>
+                <div class="hatena-social-btn">
+                    <a href="http://b.hatena.ne.jp/entry/" class="hatena-bookmark-button" data-hatena-bookmark-layout="standard-balloon" data-hatena-bookmark-lang="ja" title="このエントリーをはてなブックマークに追加"><img src="http://b.st-hatena.com/images/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a>
+                </div>
+            </li>
+            <li>
+                <div class="google-social-btn">
+                    <div class="g-plusone" data-size="medium"></div>
+                </div>
+            </li>
+            <li><span><script type="text/javascript" src="//media.line.me/js/line-button.js?v=20140411" ></script><script type="text/javascript">new media_line_me.LineButton({"pc":false,"lang":"ja","type":"a"});</script></span>
+            </li>
+        </ul>
+    </div>
+</div>
+            <div id="wiki-body">
+                <div id="rendered-body">
+                <p><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E3%83%96%E3%83%BC%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%AC%E3%83%81%E3%83%A3%E3%80%8E%E3%82%AD%E3%83%A3%E3%83%A1%E3%83%AD%E3%83%83%E3%83%88%E3%81%AE%E7%B2%BE%E9%8B%AD%E3%81%9F%E3%81%A1%E3%80%8F%E7%99%BB%E5%A0%B4%EF%BC%81" title="NEWS一覧/1月16日よりブースターガチャ『キャメロットの精鋭たち』登場！ "><img src="http://cdn.wiki.famitsu.com/files/attachment/000/027/857/ref_upload.png" alt="0116bn3.png" title="0116bn3.png" width="640" height="254" /></a><br />
+<span style="font-size:24px;display:inline-block;line-height:130%;text-indent:0px"><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E3%83%96%E3%83%BC%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%AC%E3%83%81%E3%83%A3%E3%80%8E%E3%82%AD%E3%83%A3%E3%83%A1%E3%83%AD%E3%83%83%E3%83%88%E3%81%AE%E7%B2%BE%E9%8B%AD%E3%81%9F%E3%81%A1%E3%80%8F%E7%99%BB%E5%A0%B4%EF%BC%81" title="NEWS一覧/1月16日よりブースターガチャ『キャメロットの精鋭たち』登場！ ">1月16日よりブースターガチャ『キャメロットの精鋭たち』登場！</a></span></p>
+<p><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E2%80%9C%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF%E3%83%81%E3%82%A2%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%BC%E3%82%BF%E3%83%BC%E2%80%9D%E9%A1%95%E7%8F%BE%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%EF%BC%81" title="NEWS一覧/1月16日より“ブラックチアリーイーター”顕現イベント！ "><img src="http://cdn.wiki.famitsu.com/files/attachment/000/027/856/ref_upload.png" alt="0116bn2.png" title="0116bn2.png" width="640" height="254" /></a><br />
+<span style="font-size:24px;display:inline-block;line-height:130%;text-indent:0px"><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E2%80%9C%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF%E3%83%81%E3%82%A2%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%BC%E3%82%BF%E3%83%BC%E2%80%9D%E9%A1%95%E7%8F%BE%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%EF%BC%81" title="NEWS一覧/1月16日より“ブラックチアリーイーター”顕現イベント！ ">1月16日より“ブラックチアリーイーター”顕現イベント！</a></span></p>
+<p><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%81%AB%E6%96%B0%E3%81%9F%E3%81%AA%E3%82%8B%E5%A6%96%E7%B2%BE%E3%81%8C%E5%87%BA%E7%8F%BE%EF%BC%81" title="NEWS一覧/1月16日よりスペシャルクエストに新たなる妖精が出現！ "><img src="http://cdn.wiki.famitsu.com/files/attachment/000/027/855/ref_upload.png" alt="0116bn1.png" title="0116bn1.png" width="640" height="254" /></a><br />
+<span style="font-size:24px;display:inline-block;line-height:130%;text-indent:0px"><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%81%AB%E6%96%B0%E3%81%9F%E3%81%AA%E3%82%8B%E5%A6%96%E7%B2%BE%E3%81%8C%E5%87%BA%E7%8F%BE%EF%BC%81" title="NEWS一覧/1月16日よりスペシャルクエストに新たなる妖精が出現！ ">1月16日よりスペシャルクエストに新たなる妖精が出現！</a></span></p>
+<hr class="full_hr" />
+<p><span style="font-size:16px;display:inline-block;line-height:130%;text-indent:0px"><strong>『乖離性ミリオンアーサー』(iOS/Android)の攻略情報サイトです。</strong></span><br />
+<span style="font-size:16px;display:inline-block;line-height:130%;text-indent:0px"><strong>当サイトでは公式のデータをもとに、本作の攻略を展開していきます。</strong></span><br />
+<span style="color:red">※当サイトに掲載されている情報には、ネタバレの要素が含まれておりますので、注意してご覧ください。</span><br />
+<strong>皆様からのご質問、ご要望、ご意見もお待ちしております。</strong>（<a href="/kairi/%E9%9B%91%E8%AB%87%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="雑談掲示板 ">雑談掲示板</a> / <a href="/kairi/%E8%B3%AA%E5%95%8F%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="質問掲示板 ">質問掲示板</a>）</p>
+<div><span id="xpd_button1001" class="expand-wrap plugin-region" data-id="xpd_content1001" data-saveid="schedule">
+        <span class="btn expand-btn"><span class="text"><span style="color:red">イベント＆ゲリラのスケジュール情報を確認する</span>
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content1001" class="expand-content" style="display:none;">
+<div class="ie5"><table class="style_table" cellspacing="1" border="0"><tbody><tr><td class="style_td" style="background-color:floralwhite;">ゲリラ情報</td><td class="style_td" style="background-color:floralwhite;">日付</td><td class="style_td" style="background-color:floralwhite;">開始時間</td><td class="style_td" style="background-color:floralwhite;">終了時間</td></tr><tr><td class="style_td" rowspan="4"><strong>チアリーイーター</strong></td><td class="style_td" rowspan="4" style="background-color:#FF99FF;">1月16日(金)～1月30日(金)</td><td class="style_td" style="background-color:#FF99FF;">7:00</td><td class="style_td" style="background-color:#FF99FF;">8:00</td></tr><tr><td class="style_td" style="background-color:#FF99FF;">12:00</td><td class="style_td" style="background-color:#FF99FF;">13:00</td></tr><tr><td class="style_td" style="background-color:#FF99FF;">18:00</td><td class="style_td" style="background-color:#FF99FF;">19:00</td></tr><tr><td class="style_td" style="background-color:#FF99FF;">24:00</td><td class="style_td" style="background-color:#FF99FF;">25:00</td></tr><tr><td class="style_td" rowspan="4"><strong>トム/サム</strong></td><td class="style_td" style="background-color:#99FFCC;">1月16日(金)</td><td class="style_td" style="background-color:#99FFCC;">21:00</td><td class="style_td" style="background-color:#99FFCC;">23:00</td></tr><tr><td class="style_td" rowspan="3" style="background-color:#99FFCC;">1月18日(日),20日(火),22日(木)<br class="spacer" />,24日(土),26日(月),28日(水),30日(金)</td><td class="style_td" style="background-color:#99FFCC;">21:00</td><td class="style_td" style="background-color:#99FFCC;">23:00</td></tr><tr><td class="style_td" style="background-color:#99FFCC;">15:00</td><td class="style_td" style="background-color:#99FFCC;">17:00</td></tr><tr><td class="style_td" style="background-color:#99FFCC;">21:00</td><td class="style_td" style="background-color:#99FFCC;">23:00</td></tr><tr><td class="style_td" rowspan="3"><strong>ドモヴォーイ</strong></td><td class="style_td" rowspan="3" style="background-color:#FFFFCC;">1月17日(土),19日(月),21日(水)<br class="spacer" />,23日(金),25日(日),27日(火),29日(木)</td><td class="style_td" style="background-color:#FFFFCC;">21:00</td><td class="style_td" style="background-color:#FFFFCC;">23:00</td></tr><tr><td class="style_td" style="background-color:#FFFFCC;">15:00</td><td class="style_td" style="background-color:#FFFFCC;">17:00</td></tr><tr><td class="style_td" style="background-color:#FFFFCC;">21:00</td><td class="style_td" style="background-color:#FFFFCC;">23:00</td></tr><tr><td class="style_td" rowspan="2"><strong>ヴァンニク</strong></td><td class="style_td" style="background-color:#FF6633;">1月16(金)～1月18日(日)</td><td class="style_td" rowspan="2" colspan="2" style="background-color:#FF6633; text-align:center;">常駐</td></tr><tr><td class="style_td" style="background-color:#FF6633;">1月25(日)～1月27日(火)</td></tr><tr><td class="style_td" rowspan="2"><strong>ハルダーフォーク</strong></td><td class="style_td" style="background-color:#87ceeb;">1月19(月)～1月21日(水)</td><td class="style_td" rowspan="2" colspan="2" style="background-color:#87ceeb; text-align:center;">常駐</td></tr><tr><td class="style_td" style="background-color:#87ceeb;">1月28(水)～1月29日(木)</td></tr><tr><td class="style_td" rowspan="2"><strong>ワイルドハント</strong></td><td class="style_td" style="background-color:#FF99FF;">1月22(木)～1月25日(日)</td><td class="style_td" rowspan="2" colspan="2" style="background-color:#FF99FF; text-align:center;">常駐</td></tr><tr><td class="style_td" style="background-color:#FF99FF;">1月30(金)～1月31日(土)</td></tr><tr><td class="style_td"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E3%83%90%E3%83%BC%E3%82%B2%E3%82%B9%E3%83%88" title="スペシャルイベント/バーゲスト ">バーゲスト</a></td><td class="style_td" style="background-color:#FF6633;">1月15(木)～1月17日(土)</td><td class="style_td" colspan="2" style="background-color:#FF6633; text-align:center;">常駐</td></tr><tr><td class="style_td"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E3%83%AB%E3%82%B5%E3%83%AA%E3%82%A3" title="スペシャルイベント/ルサリィ ">ルサリィ</a></td><td class="style_td" style="background-color:#99FFCC;">1月18(日)～1月20日(火)</td><td class="style_td" colspan="2" style="background-color:#99FFCC; text-align:center;">常駐</td></tr><tr><td class="style_td"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E3%83%9A%E3%83%AA%E3%83%BC%E3%83%80%E3%83%B3%E3%82%B5%E3%83%BC" title="スペシャルイベント/ペリーダンサー ">ペリーダンサー</a></td><td class="style_td" style="background-color:#FF99FF;">1月21(水)～1月23日(金)</td><td class="style_td" colspan="2" style="background-color:#FF99FF; text-align:center;">常駐</td></tr><tr><td class="style_td"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E3%83%9A%E3%83%83%E3%82%B0%E3%83%91%E3%82%A6%E3%83%A9%E3%83%BC" title="スペシャルイベント/ペッグパウラー ">ペッグパウラー</a></td><td class="style_td" style="background-color:#87ceeb;">1月24(土)～1月26日(月)</td><td class="style_td" colspan="2" style="background-color:#87ceeb; text-align:center;">常駐</td></tr><tr><td class="style_td"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E3%83%96%E3%83%A9%E3%82%A6%E3%83%8B%E3%83%BC" title="スペシャルイベント/ブラウニー ">ブラウニー</a></td><td class="style_td" style="background-color:#99FFCC;">1月27(火)～1月29日(木)</td><td class="style_td" colspan="2" style="background-color:#99FFCC; text-align:center;">常駐</td></tr><tr><td class="style_td"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E3%82%AE%E3%83%AA%E3%83%BC%E3%83%89%E3%82%A5" title="スペシャルイベント/ギリードゥ ">ギリードゥ</a></td><td class="style_td" style="background-color:#FFFFCC;">1月30(金)～1月31日(土)</td><td class="style_td" colspan="2" style="background-color:#FFFFCC; text-align:center;">常駐</td></tr><tr><td class="style_td" rowspan="17"><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E6%88%90%E9%95%B7%E3%81%AE%E8%BC%9D%E3%81%8D" title="スペシャルイベント/成長の輝き ">眩き成長の光</a></td><td class="style_td" rowspan="3" style="background-color:#FFCCCC;">1月16日(金)</td><td class="style_td" style="background-color:#FFCCCC;">08:00</td><td class="style_td" style="background-color:#FFCCCC;">09:00</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">13:00</td><td class="style_td" style="background-color:#FFCCCC;">13:30</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">20:00</td><td class="style_td" style="background-color:#FFCCCC;">21:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月17日(土)</td><td class="style_td" style="background-color:#FFCCCC;">14:30</td><td class="style_td" style="background-color:#FFCCCC;">15:00</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">23:00</td><td class="style_td" style="background-color:#FFCCCC;">00:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月18日(日)</td><td class="style_td" style="background-color:#FFCCCC;">13:00</td><td class="style_td" style="background-color:#FFCCCC;">13:30</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">17:00</td><td class="style_td" style="background-color:#FFCCCC;">18:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月19日(月)</td><td class="style_td" style="background-color:#FFCCCC;">13:30</td><td class="style_td" style="background-color:#FFCCCC;">14:00</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">19:00</td><td class="style_td" style="background-color:#FFCCCC;">20:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月20日(火)</td><td class="style_td" style="background-color:#FFCCCC;">14:00</td><td class="style_td" style="background-color:#FFCCCC;">14:30</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">20:00</td><td class="style_td" style="background-color:#FFCCCC;">21:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月21日(水)</td><td class="style_td" style="background-color:#FFCCCC;">14:30</td><td class="style_td" style="background-color:#FFCCCC;">15:00</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">23:00</td><td class="style_td" style="background-color:#FFCCCC;">00:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月22日(木)</td><td class="style_td" style="background-color:#FFCCCC;">13:00</td><td class="style_td" style="background-color:#FFCCCC;">13:30</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">17:00</td><td class="style_td" style="background-color:#FFCCCC;">18:00</td></tr><tr><td class="style_td" rowspan="2" style="background-color:#FFCCCC;">1月23日(金)</td><td class="style_td" style="background-color:#FFCCCC;">13:30</td><td class="style_td" style="background-color:#FFCCCC;">14:00</td></tr><tr><td class="style_td" style="background-color:#FFCCCC;">19:00</td><td class="style_td" style="background-color:#FFCCCC;">20:00</td></tr></tbody></table></div>
+</div>
+<h2 id="content_1001_0">NEWS</h2>
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li>2015.1.16 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E3%83%96%E3%83%BC%E3%82%B9%E3%82%BF%E3%83%BC%E3%82%AC%E3%83%81%E3%83%A3%E3%80%8E%E3%82%AD%E3%83%A3%E3%83%A1%E3%83%AD%E3%83%83%E3%83%88%E3%81%AE%E7%B2%BE%E9%8B%AD%E3%81%9F%E3%81%A1%E3%80%8F%E7%99%BB%E5%A0%B4%EF%BC%81" title="NEWS一覧/1月16日よりブースターガチャ『キャメロットの精鋭たち』登場！ ">1月16日よりブースターガチャ『キャメロットの精鋭たち』登場！</a></li>
+<li>2015.1.16 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E2%80%9C%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF%E3%83%81%E3%82%A2%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%BC%E3%82%BF%E3%83%BC%E2%80%9D%E9%A1%95%E7%8F%BE%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%EF%BC%81" title="NEWS一覧/1月16日より“ブラックチアリーイーター”顕現イベント！ ">1月16日より“ブラックチアリーイーター”顕現イベント！</a></li>
+<li>2015.1.16 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%81%AB%E6%96%B0%E3%81%9F%E3%81%AA%E3%82%8B%E5%A6%96%E7%B2%BE%E3%81%8C%E5%87%BA%E7%8F%BE%EF%BC%81" title="NEWS一覧/1月16日よりスペシャルクエストに新たなる妖精が出現！ ">1月16日よりスペシャルクエストに新たなる妖精が出現！</a></li>
+<li>2015.1.16 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E6%96%B0%E6%83%85%E5%A0%B1%EF%BC%81_%E6%96%B0%E8%A6%8F%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88%E3%82%92%E5%85%88%E8%A1%8C%E5%85%AC%E9%96%8B%EF%BC%81" title="NEWS一覧/1月16日新情報！_新規キャラクターイラストを先行公開！ ">1月16日新情報！ 新規キャラクターイラストを先行公開！</a></li>
+<li>2015.1.16 <a href="http://app.famitsu.com/20150116_484139/" rel="nofollow">【ファミ通app】最新3Dボス”ブラックチアリーイーター”のプレイ動画を先行公開！</a></li>
+<li>2015.1.10　<a href="/kairi/%E3%82%AC%E3%83%81%E3%83%A3%E5%A0%B1%E5%91%8A%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="ガチャ報告掲示板 ">ガチャ報告掲示板</a>や各アーサー掲示板の掲示板を設置</li>
+<li>2015.1.9 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%889%E6%97%A5%E5%AE%9F%E6%96%BD%E3%81%AE%E3%83%A1%E3%83%B3%E3%83%86%E3%83%8A%E3%83%B3%E3%82%B9%E3%81%A7%E3%81%AE%E4%B8%8D%E5%85%B7%E5%90%88%E4%BF%AE%E6%AD%A3%E3%81%AE%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B" title="NEWS一覧/1月9日実施のメンテナンスでの不具合修正のお知らせ ">　1月9日実施のメンテナンスでの不具合修正のお知らせ</a></li>
+<li>2015.1.9 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/%E9%AB%98HP%E7%A2%BA%E7%8E%87UP%E3%82%AC%E3%83%81%E3%83%A3%E3%80%8CHP%E3%81%8C%E6%AC%B2%E3%81%97%E3%81%84%E7%8E%8B%E6%A7%98%E3%80%81%E3%81%93%E3%81%AE%E6%8C%87%E3%81%A8%EF%BD%9E%E3%81%BE%E3%82%8C%EF%BC%81%E3%80%8D%E7%99%BB%E5%A0%B4" title="NEWS一覧/高HP確率UPガチャ「HPが欲しい王様、この指と～まれ！」登場 ">　高HP確率UPガチャ「HPが欲しい王様、この指と～まれ！」登場</a></li>
+<li>2015.1.9 <a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/500%E4%B8%87DL%E7%AA%81%E7%A0%B4%E8%A8%98%E5%BF%B5%E3%82%AD%E3%83%A3%E3%83%B3%E3%83%9A%E3%83%BC%E3%83%B3%E9%96%8B%E5%82%AC%EF%BC%881%E6%9C%889%E6%97%A517_00%E3%80%9C%EF%BC%89" title="NEWS一覧/500万DL突破記念キャンペーン開催（1月9日17_00〜） ">　500万DL突破記念キャンペーン開催（1月9日17_00〜）</a></li>
+<li>2015.1.7　【期間限定】<a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E6%96%B0%E6%98%A5%E5%9E%8B%E3%82%A4%E3%83%86%E3%83%BC%E3%83%AB" title="スペシャルイベント/新春型イテール ">新春型イテールの攻略ページを掲載！</a></li>
+<li>2015.1.4　【期間限定】<a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E6%96%B0%E6%98%A5%E5%9E%8B%E3%82%B7%E3%82%B0%E3%83%AB%E3%83%BC%E3%83%B3" title="スペシャルイベント/新春型シグルーン ">新春型シグルーンの攻略ページを掲載！</a></li>
+<li>2015.1.1 【イベント情報】<a href="/kairi/NEWS%E4%B8%80%E8%A6%A7/%E3%80%90%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E6%83%85%E5%A0%B1%E3%80%91%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%80%8E%E9%99%8D%E8%87%A8%E7%A5%AD%E3%80%8F%E9%96%8B%E5%82%AC%EF%BC%81%EF%BC%81%EF%BC%881%E6%9C%882%E6%97%A5%E3%80%9C1%E6%9C%885%E6%97%A5%EF%BC%89" title="NEWS一覧/【イベント情報】スペシャルクエスト『降臨祭』開催！！（1月2日〜1月5日） ">スペシャルクエスト『降臨祭』開催！！（1月2日〜1月5日）</a></li>
+<li>2015.1.1　【期間限定】<a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E6%96%B0%E6%98%A5%E5%9E%8B%E3%82%AA%E3%82%A4%E3%83%95%E3%82%A7" title="スペシャルイベント/新春型オイフェ ">新春型オイフェの攻略ページを掲載！</a></li>
+<li>2015.1.1　【期間限定】<a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88/%E6%96%B0%E6%98%A5%E5%9E%8B%E3%82%AF%E3%83%BC%E3%83%9B%E3%83%AA%E3%83%B3" title="スペシャルイベント/新春型クーホリン ">新春型クーホリンの攻略ページを掲載！</a></li></ul>
+<p><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7" title="NEWS一覧 ">NEWS一覧</a></p>
+
+<h2 id="content_1001_1">動画</h2>
+
+<h3 id="content_1001_2">最新3Dボス&quot;ブラックチアリーイーター&quot;を先行プレイ！</h3>
+<p><div style="max-width:560px;max-height:315px"><div class="youtube-movie" style="padding-bottom:56.25%"><iframe width="560" height="315" src="//www.youtube.com/embed/E6FjS41AazI" frameborder="0" allowfullscreen></iframe></div></div></p>
+
+<h2 id="content_1001_3">オススメコンテンツ</h2>
+<p><strong>【キャラクター】</strong>　<a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7" title="キャラクター一覧 ">キャラクター一覧</a>　　アーサー別：<a href="/kairi/%E5%82%AD%E5%85%B5" title="傭兵 ">傭兵</a> / <a href="/kairi/%E5%AF%8C%E8%B1%AA" title="富豪 ">富豪</a> / <a href="/kairi/%E7%9B%97%E8%B3%8A" title="盗賊 ">盗賊</a> / <a href="/kairi/%E6%AD%8C%E5%A7%AB" title="歌姫 ">歌姫</a>　　レアリティ別：<a href="/kairi/%E2%98%861%EF%BC%88NORMAL%EF%BC%89" title="☆1（NORMAL） ">☆1（NORMAL）</a> / <a href="/kairi/%E2%98%862%EF%BC%88HIGH_NORMAL%EF%BC%89" title="☆2（HIGH_NORMAL） ">☆2（HIGH NORMAL）</a> / <a href="/kairi/%E2%98%863%EF%BC%88RARE%EF%BC%89" title="☆3（RARE） ">☆3（RARE）</a> / <a href="/kairi/%E2%98%864%EF%BC%88SUPER_RARE%EF%BC%89" title="☆4（SUPER_RARE） ">☆4（SUPER RARE）</a> / <a href="/kairi/%E2%98%865%EF%BC%88ULTRA_RARE%EF%BC%89" title="☆5（ULTRA_RARE） ">☆5（ULTRA RARE）</a> / <a href="/kairi/%E2%98%866%EF%BC%88MILLION_RARE%EF%BC%89" title="☆6（MILLION_RARE） ">☆6（MILLION RARE）</a>　　タイプ別：<a href="/kairi/%E7%89%A9%E7%90%86" title="物理 ">物理</a> / <a href="/kairi/%E9%AD%94%E6%B3%95" title="魔法 ">魔法</a> / <a href="/kairi/%E6%B2%BB%E7%99%92" title="治癒 ">治癒</a> / <a href="/kairi/%E6%94%AF%E6%8F%B4%E3%83%BB%E9%98%B2%E5%BE%A1%E3%83%BB%E5%A6%A8%E5%AE%B3" title="支援・防御・妨害 ">支援・防御・妨害</a>　　　属性別：<a href="/kairi/%E7%81%AB" title="火 ">火</a> / <a href="/kairi/%E6%B0%B7" title="氷 ">氷</a> / <a href="/kairi/%E9%A2%A8" title="風 ">風</a> / <a href="/kairi/%E5%85%89" title="光 ">光</a> / <a href="/kairi/%E9%97%87" title="闇 ">闇</a><br />
+<strong>【データベース】</strong>　<a href="/kairi/%E3%82%B9%E3%82%AD%E3%83%AB" title="スキル ">スキル</a>　　スキル逆引き辞典：<a href="/kairi/%E9%80%9A%E5%B8%B8%E5%8A%B9%E6%9E%9C" title="通常効果 ">通常効果</a> / <a href="/kairi/%E8%A6%9A%E9%86%92%E5%8A%B9%E6%9E%9C" title="覚醒効果 ">覚醒効果</a>　　<a href="/kairi/%E3%82%A2%E3%82%A4%E3%83%86%E3%83%A0" title="アイテム ">アイテム</a>　　敵：<a href="/kairi/%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AA%E3%83%BC%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="ストーリーの敵一覧 ">ストーリーの敵一覧</a> / <a href="/kairi/%E3%83%8E%E3%83%BC%E3%83%9E%E3%83%AB%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="ノーマルクエストの敵一覧 ">ノーマルクエストの敵一覧</a> / <a href="/kairi/%E6%9B%9C%E6%97%A5%E5%88%A5%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="曜日別ステージの敵一覧 ">曜日別ステージの敵一覧</a> / <a href="/kairi/%E3%82%B2%E3%83%AA%E3%83%A9%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="ゲリラステージの敵一覧 ">ゲリラステージの敵一覧</a>　　素材：<a href="/kairi/%E5%BC%B7%E5%8C%96%E7%B4%A0%E6%9D%90" title="強化素材 ">強化素材</a> / <a href="/kairi/%E9%80%B2%E5%8C%96%E7%B4%A0%E6%9D%90" title="進化素材 ">進化素材</a> / <a href="/kairi/%E5%A3%B2%E5%8D%B4%E7%B4%A0%E6%9D%90" title="売却素材 ">売却素材</a></p>
+
+<h2 id="content_1001_4">リンク</h2>
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li>公式サイト　<a href="http://portal.million-arthurs.com/kairi/" rel="nofollow">http://portal.million-arthurs.com/kairi/</a></li>
+<li>スクウェア・エニックスマーケット　<a href="http://sqmk.jp" rel="nofollow">http://sqmk.jp</a></li></ul>
+
+<h2 id="content_1001_5">基本情報</h2>
+<div class="ie5"><table class="style_table" cellspacing="1" border="0"><tbody><tr><td class="style_td" style="background-color:lightblue;">タイトル</td><td class="style_td" colspan="3">乖離性ミリオンアーサー</td></tr><tr><td class="style_td" rowspan="3" style="background-color:lightblue;">プラットフォーム</td><td class="style_td" colspan="3">iOS　　<a href="https://itunes.apple.com/jp/app/guai-li-xingmirionasa/id922871473?l=ja&amp;ls=1&amp;mt=8" rel="nofollow"><img src="http://cdn.wiki.famitsu.com/files/attachment/000/015/577/thumb_upload.png" alt="icon_app_pc.png" title="icon_app_pc.png" width="152" height="45" /></a></td></tr><tr><td class="style_td" colspan="3">Android　<a href="https://play.google.com/store/apps/details?id=com.square_enix.kairisei_MA" rel="nofollow"><img src="http://cdn.wiki.famitsu.com/files/attachment/000/015/578/thumb_upload.png" alt="icon_google.png" title="icon_google.png" width="130" height="45" /></a></td></tr><tr><td class="style_td" colspan="3">※OSのバージョン、対応機種は各アプリマーケットをご参照ください。<br class="spacer" />※一部、非対応機種がございます。</td></tr><tr><td class="style_td" style="background-color:lightblue;">配信開始日</td><td class="style_td" colspan="3">2014年11月19日(水)</td></tr><tr><td class="style_td" style="background-color:lightblue;">価格</td><td class="style_td" colspan="3">アイテム課金型（基本プレイ無料）</td></tr><tr><td class="style_td" style="background-color:lightblue;">ジャンル</td><td class="style_td" colspan="3">キャラクターコマンドRPG</td></tr><tr><td class="style_td" style="background-color:lightblue;">メーカー</td><td class="style_td" colspan="3"><a href="http://www.jp.square-enix.com/" rel="nofollow">スクウェア・エニックス</a></td></tr><tr><td class="style_td" style="background-color:lightblue;">プレイ人数</td><td class="style_td" colspan="3">1人～4人</td></tr></tbody></table></div>
+<p><strong>乖離性ミリオンアーサー攻略wikiアカウント</strong><br />
+<a href="https://twitter.com/kairiseiMAwiki" rel="nofollow">@kairiseiMAwiki</a><br />
+Twitterにて毎日、当wikiサイトの更新情報を配信しています！</p>
+<object class="iframe" type="text/html" style="width:280px;height:660px;" data="http://wiki.famitsu.com/theme/famitsu/kairi/twitter.html"><p>Your borwser is not supporting object tag. Please use one of the latest browsers.<br />Go to <a href="http://wiki.famitsu.com/theme/famitsu/kairi/twitter.html">http://wiki.famitsu.com/theme/famitsu/kairi/twitter.html</a></p></object>
+<object class="iframe" type="text/html" style="width:280px;height:660px;" data="http://wiki.famitsu.com/theme/famitsu/kairi/twitter2.html"><p>Your borwser is not supporting object tag. Please use one of the latest browsers.<br />Go to <a href="http://wiki.famitsu.com/theme/famitsu/kairi/twitter2.html">http://wiki.famitsu.com/theme/famitsu/kairi/twitter2.html</a></p></object>
+                </div>
+                <div id="game-footer">
+                    <p class="copyright">※本サイトの制作・運営はファミ通が行っております。</BR>
+※本サイトに掲載されている攻略、データ類の無断使用・無断転載は固くお断りします。</BR>
+(C)2014 SQUARE ENIX CO., LTD.  All Rights Reserved.</p>
+                </div>
+            </div>
+         </div>
+     </section>
+</article>
+<aside>
+    <div id="ad-wiki-content-lower">
+        <div class="clearfix">
+<div style="width:300px; float:left; margin-right:30px;">
+<script type="text/javascript"><!--
+google_ad_client = "ca-pub-3166280997155124";
+/* ファミ通wiki_ミリオンアーサー_PC_300×250① */
+google_ad_slot = "1533985432";
+google_ad_width = 300;
+google_ad_height = 250;
+//-->
+</script>
+<script type="text/javascript"
+src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div>
+
+<div style="width:300px; float:left;">
+<script type="text/javascript"><!--
+google_ad_client = "ca-pub-3166280997155124";
+/* ファミ通wiki_ミリオンアーサー_PC_300×250② */
+google_ad_slot = "3010693312";
+google_ad_width = 300;
+google_ad_height = 250;
+//-->
+</script>
+<script type="text/javascript"
+src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+</div>
+</div>    </div>
+</aside>
+
+<div id="pre-login" class="clearfix"></div>
+
+                </div>
+            </div>
+        </div>
+                <div id="content-sub-1">
+            <div class="inner">
+            <div id="google_translate_element-wrap" class="sp-no">
+            <div id="google_translate_element"></div><script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'ja', includedLanguages: 'en,ja,ko,zh-CN,zh-TW', layout: google.translate.TranslateElement.InlineLayout.SIMPLE, autoDisplay: false}, 'google_translate_element');
+}
+</script><script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script></div>
+                <div id="wiki-search">
+                                        <form action="/kairi/-/pages/search" id="cse-search-box" class="clearfix">
+                        <div class="inner">
+                            <input type="hidden" name="cx" value="006862251071045765289:w4nti0frgaa" />
+                            <input type="hidden" name="ie" value="UTF-8" />
+                            <input type="text" name="q" value="" />
+                            <button type="submit" value="����"><i class="fa fa-search"></i></button>
+                        </div>
+                    </form>
+                    <script type="text/javascript" src="http://www.google.co.jp/coop/cse/brand?form=cse-search-box&amp;lang=ja"></script>
+                                    </div>
+                <div id="content-menu-wrap" class="obj-content-menu">
+                    <div id="side-content-menu">
+                        <section>
+                            <div id="menu" class="wiki">
+                                <div class="side-content-expand">
+
+<div class="ct01">
+
+<span id="rgn_button1" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content1" data-saveid="">
+    <h3 class="open-close status-open">ゲーム概要
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content1" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%B2%E3%83%BC%E3%83%A0%E3%81%AE%E9%80%B2%E3%82%81%E3%81%8B%E3%81%9F" title="ゲームの進めかた ">ゲームの進めかた</a></li>
+<li><a href="/kairi/%E3%83%87%E3%83%83%E3%82%AD%E3%81%AE%E6%A7%8B%E7%AF%89" title="デッキの構築 ">デッキの構築</a></li>
+<li><a href="/kairi/%E3%83%90%E3%83%88%E3%83%AB%E3%81%AE%E9%80%B2%E3%82%81%E3%81%8B%E3%81%9F" title="バトルの進めかた ">バトルの進めかた</a></li>
+<li><a href="/kairi/%E5%8D%94%E5%8A%9B%E3%83%97%E3%83%AC%E3%82%A4%EF%BC%88%E3%81%BF%E3%82%93%E3%81%AA%E3%81%A7%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%EF%BC%89" title="協力プレイ（みんなでクエスト） ">協力プレイ（みんなでクエスト）</a></li></ul>
+<div><span id="xpd_button1" class="expand-wrap plugin-region" data-id="xpd_content1" data-saveid="expand6">
+        <span class="btn expand-btn"><span class="text">初心者講座
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content1" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E3%81%A8%E3%81%AF" title="アーサーとは ">アーサーとは</a></li>
+<li><a href="/kairi/%E5%B1%9E%E6%80%A7%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6" title="属性について ">属性とは</a></li>
+<li><a href="/kairi/%E3%82%BF%E3%82%A4%E3%83%97%E3%81%A8%E3%81%AF" title="タイプとは ">タイプとは</a></li>
+<li><a href="/kairi/%E3%82%B9%E3%82%AD%E3%83%AB%E3%81%A8%E3%81%AF" title="スキルとは ">スキルとは</a></li>
+<li><a href="/kairi/%E3%83%AC%E3%82%A2%E3%83%AA%E3%83%86%E3%82%A3" title="レアリティ ">レアリティとは</a></li>
+<li><a href="/kairi/%E3%82%AB%E3%83%BC%E3%83%89%E5%90%88%E6%88%90%E3%81%A8%E3%81%AF" title="カード合成とは ">カード合成とは</a></li>
+<li><a href="/kairi/%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%81%A8%E3%81%AF" title="クエストとは ">クエストとは</a></li>
+<li><a href="/kairi/%E6%8E%A2%E7%B4%A2%E3%81%A8%E3%81%AF" title="探索とは ">探索とは</a></li>
+<li><a href="/kairi/%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF" title="パラメータ ">パラメータとは</a></li>
+<li><a href="/kairi/%E3%82%B9%E3%83%86%E3%83%BC%E3%82%BF%E3%82%B9%E3%81%AE%E8%A6%8B%E6%96%B9" title="ステータスの見方 ">ステータスの見方</a></li>
+<li><a href="/kairi/%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E3%83%9C%E3%83%BC%E3%83%8A%E3%82%B9" title="ログインボーナス ">ログインボーナス</a></li>
+<li><a href="/kairi/%E3%81%AF%E3%81%98%E3%82%81%E3%81%A6%E3%81%AE%E3%82%AC%E3%83%81%E3%83%A3" title="はじめてのガチャ ">はじめてのガチャ</a>
+</div></li></ul>
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E4%B8%AD%E7%B4%9A%E8%80%85%E8%AC%9B%E5%BA%A7" title="中級者講座 ">中級者講座</a>
+</div>
+</div></li></ul>
+<div class="ct02">
+
+<span id="rgn_button2" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content2" data-saveid="">
+    <h3 class="open-close status-open">キャラクター
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content2" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7" title="キャラクター一覧 ">キャラクター一覧</a></li></ul>
+<div><span id="xpd_button2" class="expand-wrap plugin-region" data-id="xpd_content2" data-saveid="expand2">
+        <span class="btn expand-btn"><span class="text">アーサー別
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content2" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E5%82%AD%E5%85%B5" title="傭兵 ">傭兵</a></li>
+<li><a href="/kairi/%E5%AF%8C%E8%B1%AA" title="富豪 ">富豪</a></li>
+<li><a href="/kairi/%E7%9B%97%E8%B3%8A" title="盗賊 ">盗賊</a></li>
+<li><a href="/kairi/%E6%AD%8C%E5%A7%AB" title="歌姫 ">歌姫</a>
+</div></li></ul>
+<div><span id="xpd_button3" class="expand-wrap plugin-region" data-id="xpd_content3" data-saveid="expand5">
+        <span class="btn expand-btn"><span class="text">レアリティ別
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content3" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E2%98%861%EF%BC%88NORMAL%EF%BC%89" title="☆1（NORMAL） ">☆1（NORMAL）</a></li>
+<li><a href="/kairi/%E2%98%862%EF%BC%88HIGH_NORMAL%EF%BC%89" title="☆2（HIGH_NORMAL） ">☆2（HIGH NORMAL）</a></li>
+<li><a href="/kairi/%E2%98%863%EF%BC%88RARE%EF%BC%89" title="☆3（RARE） ">☆3（RARE）</a></li>
+<li><a href="/kairi/%E2%98%864%EF%BC%88SUPER_RARE%EF%BC%89" title="☆4（SUPER_RARE） ">☆4（SUPER RARE）</a></li>
+<li><a href="/kairi/%E2%98%865%EF%BC%88ULTRA_RARE%EF%BC%89" title="☆5（ULTRA_RARE） ">☆5（ULTRA RARE）</a></li>
+<li><a href="/kairi/%E2%98%866%EF%BC%88MILLION_RARE%EF%BC%89" title="☆6（MILLION_RARE） ">☆6（MILLION RARE）</a>
+</div></li></ul>
+<div><span id="xpd_button4" class="expand-wrap plugin-region" data-id="xpd_content4" data-saveid="expand4">
+        <span class="btn expand-btn"><span class="text">タイプ別
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content4" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E7%89%A9%E7%90%86" title="物理 ">物理</a></li>
+<li><a href="/kairi/%E9%AD%94%E6%B3%95" title="魔法 ">魔法</a></li>
+<li><a href="/kairi/%E6%B2%BB%E7%99%92" title="治癒 ">治癒</a></li>
+<li><a href="/kairi/%E6%94%AF%E6%8F%B4%E3%83%BB%E9%98%B2%E5%BE%A1%E3%83%BB%E5%A6%A8%E5%AE%B3" title="支援・防御・妨害 ">支援・防御・妨害</a>
+</div></li></ul>
+<div><span id="xpd_button5" class="expand-wrap plugin-region" data-id="xpd_content5" data-saveid="expand4">
+        <span class="btn expand-btn"><span class="text">アーサー別ランキング
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content5" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E5%82%AD%E5%85%B5%E3%82%BF%E3%82%A4%E3%83%97" title="傭兵タイプ ">傭兵タイプ</a></li>
+<li><a href="/kairi/%E5%AF%8C%E8%B1%AA%E3%82%BF%E3%82%A4%E3%83%97" title="富豪タイプ ">富豪タイプ</a></li>
+<li><a href="/kairi/%E7%9B%97%E8%B3%8A%E3%82%BF%E3%82%A4%E3%83%97" title="盗賊タイプ ">盗賊タイプ</a></li>
+<li><a href="/kairi/%E6%AD%8C%E5%A7%AB%E3%82%BF%E3%82%A4%E3%83%97" title="歌姫タイプ ">歌姫タイプ</a>
+</div></li></ul>
+<div><span id="xpd_button6" class="expand-wrap plugin-region" data-id="xpd_content6" data-saveid="expand3">
+        <span class="btn expand-btn"><span class="text">属性別
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content6" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E7%81%AB" title="火 ">火</a></li>
+<li><a href="/kairi/%E6%B0%B7" title="氷 ">氷</a></li>
+<li><a href="/kairi/%E9%A2%A8" title="風 ">風</a></li>
+<li><a href="/kairi/%E5%85%89" title="光 ">光</a></li>
+<li><a href="/kairi/%E9%97%87" title="闇 ">闇</a>
+</div></li></ul>
+<div><span id="xpd_button7" class="expand-wrap plugin-region" data-id="xpd_content7" data-saveid="expand6">
+        <span class="btn expand-btn"><span class="text">その他
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content7" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%B5%E3%82%A4%E3%82%BA%E4%B8%80%E8%A6%A7" title="サイズ一覧 ">サイズ一覧</a></li>
+<li><a href="/kairi/%E5%A3%B0%E5%84%AA%E4%B8%80%E8%A6%A7" title="声優一覧 ">声優一覧</a></li>
+<li><a href="/kairi/%E5%90%8D%E5%A3%B0%E7%8B%99%E3%81%84%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7" title="名声狙いキャラクター一覧 ">名声狙いキャラクター一覧</a>
+</div></li></ul>
+</div>
+</div>
+<div class="ct03">
+
+<span id="rgn_button3" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content3" data-saveid="">
+    <h3 class="open-close status-open">データベース
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content3" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%B9%E3%82%AD%E3%83%AB" title="スキル ">スキル</a></li></ul>
+<div><span id="xpd_button8" class="expand-wrap plugin-region" data-id="xpd_content8" data-saveid="expand6">
+        <span class="btn expand-btn"><span class="text">スキル逆引き辞典
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content8" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E9%80%9A%E5%B8%B8%E5%8A%B9%E6%9E%9C" title="通常効果 ">通常効果</a></li>
+<li><a href="/kairi/%E8%A6%9A%E9%86%92%E5%8A%B9%E6%9E%9C" title="覚醒効果 ">覚醒効果</a>
+</div></li></ul>
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%A2%E3%82%A4%E3%83%86%E3%83%A0" title="アイテム ">アイテム</a></li></ul>
+<div><span id="xpd_button9" class="expand-wrap plugin-region" data-id="xpd_content9" data-saveid="expand7">
+        <span class="btn expand-btn"><span class="text">敵
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content9" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AA%E3%83%BC%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="ストーリーの敵一覧 ">ストーリーの敵一覧</a></li>
+<li><a href="/kairi/%E3%83%8E%E3%83%BC%E3%83%9E%E3%83%AB%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="ノーマルクエストの敵一覧 ">ノーマルクエストの敵一覧</a></li>
+<li><a href="/kairi/%E6%9B%9C%E6%97%A5%E5%88%A5%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="曜日別ステージの敵一覧 ">曜日別ステージの敵一覧</a></li>
+<li><a href="/kairi/%E3%82%B2%E3%83%AA%E3%83%A9%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%81%AE%E6%95%B5%E4%B8%80%E8%A6%A7" title="ゲリラステージの敵一覧 ">ゲリラステージの敵一覧</a>
+</div></li></ul>
+<div><span id="xpd_button10" class="expand-wrap plugin-region" data-id="xpd_content10" data-saveid="expand8">
+        <span class="btn expand-btn"><span class="text">素材
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content10" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E5%BC%B7%E5%8C%96%E7%B4%A0%E6%9D%90" title="強化素材 ">強化素材</a></li>
+<li><a href="/kairi/%E9%80%B2%E5%8C%96%E7%B4%A0%E6%9D%90" title="進化素材 ">進化素材</a></li>
+<li><a href="/kairi/%E5%A3%B2%E5%8D%B4%E7%B4%A0%E6%9D%90" title="売却素材 ">売却素材</a>
+</div>
+</div>
+</div></li></ul>
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E6%8E%A2%E7%B4%A2" title="探索 ">探索</a></li></ul>
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E7%B5%8C%E9%A8%93%E5%80%A4%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB" title="経験値テーブル ">経験値テーブル</a></li></ul>
+<div class="ct04">
+
+<span id="rgn_button4" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content4" data-saveid="">
+    <h3 class="open-close status-open">ストーリー
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content4" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E7%AC%AC1%E9%83%A8" title="第1部 ">第1部</a>
+<ul class="list2" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E7%AC%AC1%E7%AB%A0" title="第1章 ">第1章</a></li>
+<li><a href="/kairi/%E7%AC%AC2%E7%AB%A0" title="第2章 ">第2章</a></li>
+<li><a href="/kairi/%E7%AC%AC3%E7%AB%A0" title="第3章 ">第3章</a></li></ul></li>
+<li><a href="/kairi/%E3%82%B5%E3%83%96%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AA%E3%83%BC" title="サブストーリー ">サブストーリー</a>
+</div>
+</div></li></ul>
+<div class="ct05">
+
+<span id="rgn_button5" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content5" data-saveid="">
+    <h3 class="open-close status-open">クエスト
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content5" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E5%88%A5%E5%8F%96%E5%BE%97%E7%B5%8C%E9%A8%93%E5%80%A4%E4%B8%80%E8%A6%A7" title="クエスト別取得経験値一覧 ">クエスト別取得経験値一覧</a></li>
+<li><a href="/kairi/%E3%83%8E%E3%83%BC%E3%83%9E%E3%83%AB" title="ノーマル ">ノーマル</a></li></ul>
+<div><span id="xpd_button11" class="expand-wrap plugin-region" data-id="xpd_content11" data-saveid="expand9">
+        <span class="btn expand-btn"><span class="text">スペシャル
+</span><span class="arrow"></span></span>
+</span></div><div id="xpd_content11" class="expand-content" style="display:none;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E6%9B%9C%E6%97%A5%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88" title="曜日イベント ">曜日イベント</a></li>
+<li><a href="/kairi/%E3%82%B9%E3%83%9A%E3%82%B7%E3%83%A3%E3%83%AB%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88" title="スペシャルイベント ">スペシャルイベント</a>
+</div></li></ul>
+</div>
+</div>
+<div class="ct06">
+
+<span id="rgn_button6" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content6" data-saveid="">
+    <h3 class="open-close status-open">ガチャ
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content6" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E3%82%AC%E3%83%81%E3%83%A3%E4%B8%80%E8%A6%A7" title="ガチャ一覧 ">ガチャ一覧</a>
+</div>
+</div></li></ul>
+<div class="ct07">
+
+<span id="rgn_button7" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content7" data-saveid="">
+    <h3 class="open-close status-open">掲示板
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content7" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/%E9%9B%91%E8%AB%87%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="雑談掲示板 ">雑談掲示板</a></li>
+<li><a href="/kairi/%E8%B3%AA%E5%95%8F%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="質問掲示板 ">質問掲示板</a></li>
+<li><a href="/kairi/%E5%82%AD%E5%85%B5%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="傭兵アーサー掲示板 ">傭兵アーサー掲示板</a></li>
+<li><a href="/kairi/%E5%AF%8C%E8%B1%AA%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="富豪アーサー掲示板 ">富豪アーサー掲示板</a></li>
+<li><a href="/kairi/%E7%9B%97%E8%B3%8A%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="盗賊アーサー掲示板 ">盗賊アーサー掲示板</a></li>
+<li><a href="/kairi/%E6%AD%8C%E5%A7%AB%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="歌姫アーサー掲示板 ">歌姫アーサー掲示板</a></li>
+<li><a href="/kairi/%E3%83%95%E3%83%AC%E3%83%B3%E3%83%89%E5%8B%9F%E9%9B%86%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="フレンド募集掲示板 ">フレンド募集掲示板</a></li>
+<li><a href="/kairi/%E3%82%AF%E3%82%A8%E3%82%B9%E3%83%88%E5%8D%94%E5%8A%9B%E5%8B%9F%E9%9B%86%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="クエスト協力募集掲示板 ">クエスト協力募集掲示板</a></li>
+<li><a href="/kairi/%E3%83%87%E3%83%83%E3%82%AD%E7%9B%B8%E8%AB%87%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="デッキ相談掲示板 ">デッキ相談掲示板</a></li>
+<li><a href="/kairi/%E3%82%AC%E3%83%81%E3%83%A3%E5%A0%B1%E5%91%8A%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="ガチャ報告掲示板 ">ガチャ報告掲示板</a></li>
+<li><a href="/kairi/%E3%83%81%E3%82%A2%E3%83%AA%E3%83%BC%E5%8D%94%E5%8A%9B%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="チアリー協力掲示板 ">チアリー協力掲示板</a></li>
+<li><a href="/kairi/%E6%8B%9B%E5%BE%85ID%E6%8E%B2%E7%A4%BA%E6%9D%BF" title="招待ID掲示板 ">招待ID掲示板</a>
+</div>
+</div></li></ul>
+<div class="ct08">
+
+<span id="rgn_button8" style="cursor:pointer" class="region-wrap plugin-region" data-id="rgn_content8" data-saveid="">
+    <h3 class="open-close status-open">その他
+<span class="btn open-close-btn"><span class="arrow"></span></span></h3>
+</span><div id="rgn_content8" style="display:block;">
+<ul class="list1" style="padding-left:16px;margin-left:16px"><li><a href="/kairi/NEWS%E4%B8%80%E8%A6%A7" title="NEWS一覧 ">NEWS一覧</a></li>
+<li><a href="/kairi/%E3%83%95%E3%82%A1%E3%83%9F%E9%80%9AApp%E6%8E%B2%E8%BC%89%E8%A8%98%E4%BA%8B" title="ファミ通App掲載記事 ">ファミ通App掲載記事</a></li>
+<li><a href="/kairi/%E5%8B%95%E7%94%BB" title="動画 ">動画</a></li>
+<li><a href="/kairi/%E7%B7%A8%E9%9B%86%E9%83%A8%E3%82%B3%E3%83%A9%E3%83%A0" title="編集部コラム ">編集部コラム</a></li>
+<li><a href="/kairi/%E7%B7%A8%E9%9B%86%E9%83%A8%E3%81%8A%E3%81%99%E3%81%99%E3%82%81%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC" title="編集部おすすめキャラクター ">編集部おすすめキャラクター</a></li>
+<li><a href="/kairi/%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%E6%83%85%E5%A0%B1" title="アップデート情報 ">アップデート情報</a></li>
+<li><a href="/kairi/FAQ" title="FAQ ">FAQ</a>
+</div>
+</div></li></ul>
+<h3 id="content_1_0"><a href="http://wiki.famitsu.com/kairi/-/pages/changes" rel="nofollow">更新ページ一覧</a></h3>
+<div class="plugin-recent"><h5>最新の10件</h5>
+<div><strong>2015-01-16</strong>
+<ul class="recent_list">
+ <li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E6%A9%9F%E5%8B%95%E5%85%B5%E5%A7%AB%E3%80%91%E5%A4%96%E6%95%B5%E5%9E%8B%E3%83%90%E3%83%B3" title="キャラクター一覧/【機動兵姫】外敵型バン (25m)">キャラクター一覧/【機動兵姫】外敵型バン</a></li>
+ <li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E6%A9%9F%E7%94%B2%E3%81%AE%E9%A8%8E%E5%A3%AB%E3%80%91%E5%A4%96%E6%95%B5%E5%9E%8B%E3%83%90%E3%83%B3" title="キャラクター一覧/【機甲の騎士】外敵型バン (25m)">キャラクター一覧/【機甲の騎士】外敵型バン</a></li>
+ <li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E9%A8%8E%E5%A3%AB%E3%80%91%E5%A4%96%E6%95%B5%E5%9E%8B%E3%83%90%E3%83%B3" title="キャラクター一覧/【騎士】外敵型バン (26m)">キャラクター一覧/【騎士】外敵型バン</a></li>
+ <li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E9%97%87%E3%81%AE%E6%88%A6%E7%95%A5%E5%AE%B6%E3%80%91%E8%B9%B4%E7%90%83%E5%9E%8B%E3%83%90%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%89" title="キャラクター一覧/【闇の戦略家】蹴球型バーナード (34m)">キャラクター一覧/【闇の戦略家】蹴球型バーナード</a></li>
+ <li><a href="/kairi/%E3%82%AC%E3%83%81%E3%83%A3%E4%B8%80%E8%A6%A7" title="ガチャ一覧 (39m)">ガチャ一覧</a></li>
+ <li><a href="/kairi/%E3%82%AC%E3%83%81%E3%83%A3%E4%B8%80%E8%A6%A7/%E3%82%AD%E3%83%A3%E3%83%A1%E3%83%AD%E3%83%83%E3%83%88%E3%81%AE%E7%B2%BE%E9%8B%AD%E3%81%9F%E3%81%A1" title="ガチャ一覧/キャメロットの精鋭たち (39m)">ガチャ一覧/キャメロットの精鋭たち</a></li>
+ <li><a href="/kairi/%E3%82%AC%E3%83%81%E3%83%A3%E4%B8%80%E8%A6%A7/%E6%96%B0%E6%98%A5%E3%80%80%E5%B9%B2%E6%94%AF%E3%83%91%E3%83%A9%E3%83%80%E3%82%A4%E3%82%B9" title="ガチャ一覧/新春　干支パラダイス (40m)">ガチャ一覧/新春　干支パラダイス</a></li>
+ <li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E9%A8%8E%E5%A3%AB%E3%80%91%E8%B9%B4%E7%90%83%E5%9E%8B%E3%83%90%E3%83%BC%E3%83%8A%E3%83%BC%E3%83%89" title="キャラクター一覧/【騎士】蹴球型バーナード (2h)">キャラクター一覧/【騎士】蹴球型バーナード</a></li>
+ <li><a href="/kairi" title="FrontPage (2h)">FrontPage</a></li>
+ <li><a href="/kairi/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E6%B9%AF%E7%85%99%E3%81%AE%E5%A6%96%E7%B2%BE%E3%80%91%E3%83%B4%E3%82%A1%E3%83%B3%E3%83%8B%E3%82%AF" title="キャラクター一覧/【湯煙の妖精】ヴァンニク (3h)">キャラクター一覧/【湯煙の妖精】ヴァンニク</a></li>
+</ul>
+</div></div>
+
+<h3 id="content_1_1"><a href="http://wiki.famitsu.com/kairi/-/pages/comments" rel="nofollow">最近ついたコメント</a></h3>
+<div class="plugin-rcomment"><h5>最新の10件</h5>
+<div><strong>2015-01-16</strong>
+<ul class="recent_list">
+ <li><a href="/kairi/-/pages/viewComment/%E6%8B%9B%E5%BE%85ID%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136895#comment" title="428074602 (0m)">428074602</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E6%AD%8C%E5%A7%AB%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136893#comment" title="取り敢えず18時からのは初見っていうのも… (4m)">取り敢えず18時からのは初見っていうのも…</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E9%9B%91%E8%AB%87%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136892#comment" title="&gt;&gt;5818
+気にするな (4m)">&gt;&gt;5818
+気にするな</a></li>
+ <li><a href="/kairi/-/pages/viewComment/NEWS%E4%B8%80%E8%A6%A7/1%E6%9C%8816%E6%97%A5%E3%82%88%E3%82%8A%E2%80%9C%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF%E3%83%81%E3%82%A2%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%BC%E3%82%BF%E3%83%BC%E2%80%9D%E9%A1%95%E7%8F%BE%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%EF%BC%81/comment_id:136891#comment" title="左側(右手)を全職優先破壊
+攻撃は魔法の… (6m)">左側(右手)を全職優先破壊
+攻撃は魔法の…</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E6%8B%9B%E5%BE%85ID%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136888#comment" title="165193344 (8m)">165193344</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E6%A9%9F%E5%8B%95%E5%85%B5%E5%A7%AB%E3%80%91%E5%A4%96%E6%95%B5%E5%9E%8B%E3%83%90%E3%83%B3/comment_id:136887#comment" title="&gt;&gt;1
+確かにアストラ以来だな (8m)">&gt;&gt;1
+確かにアストラ以来だな</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E6%8B%9B%E5%BE%85ID%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136884#comment" title="124,848,041
+リセマラにお願いします。10… (12m)">124,848,041
+リセマラにお願いします。10…</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E5%AF%8C%E8%B1%AA%E3%82%A2%E3%83%BC%E3%82%B5%E3%83%BC%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136883#comment" title="&gt;&gt;388
+バフバフしまくらんと左に通らない… (13m)">&gt;&gt;388
+バフバフしまくらんと左に通らない…</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E6%8B%9B%E5%BE%85ID%E6%8E%B2%E7%A4%BA%E6%9D%BF/comment_id:136877#comment" title="383697944
+よろしくお願いします (16m)">383697944
+よろしくお願いします</a></li>
+ <li><a href="/kairi/-/pages/viewComment/%E3%82%AD%E3%83%A3%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E4%B8%80%E8%A6%A7/%E3%80%90%E6%B9%AF%E7%85%99%E3%81%AE%E5%A6%96%E7%B2%BE%E3%80%91%E3%83%B4%E3%82%A1%E3%83%B3%E3%83%8B%E3%82%AF/comment_id:136876#comment" title="&gt;&gt;6
+等倍5k程度じゃ何の足しにもならんぜ (16m)">&gt;&gt;6
+等倍5k程度じゃ何の足しにもならんぜ</a></li>
+</ul>
+</div></div>
+</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                            </div>
+        </div>
+            </div>
+</div>
+                    </div>
+                </div>
+            </div>
+                        <footer>
+                <div id="footer">
+                    <div id="footer-inner">
+                        <div class="container">
+                            <div id="wiki-link-collection">
+        <dl>
+                <dt><a href="http://www.famitsu.com/" target="_blank">ファミ通</a>攻略wiki</dt>
+                <dd>
+            <ul class="clearfix">
+                <li><a href="http://wiki.famitsu.com/idolchronicle/" target="_blank">『アイドルクロニクル』攻略wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/shadowofmordor/" target="_blank">『シャドウ・オブ・モルドール』攻略Wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/shironeko/" target="_blank">『白猫プロジェクト』攻略まとめwiki</a></li>
+            </ul>
+            <ul class="clearfix">
+                <li><a href="http://wiki.famitsu.com/pawapuro/" target="_blank">『実況パワフルプロ野球（iOS/Android）』攻略wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/assassinrogue/" target="_blank">『アサシン クリード ローグ』攻略wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/littlenoah/" target="_blank">『リトルノア』公式攻略wiki</a></li>
+            </ul>
+            <ul class="clearfix">
+                <li><a href="http://wiki.famitsu.com/assassinunity/" target="_blank">『アサシン クリード ユニティ』攻略wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/kairi/" target="_blank">『乖離性ミリオンアーサー』攻略wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/driftspirits/" target="_blank">『ドリフトスピリッツ』攻略wiki</a></li>
+            </ul>
+            <ul class="clearfix">
+            	<li><a href="http://wiki.famitsu.com/legomovie/" target="_blank">『レゴ ムービー ザ・ゲーム』攻略wiki</a></li>
+            	<li><a href="http://wiki.famitsu.com/psychobreak/" target="_blank">『サイコブレイク』攻略wiki</a></li>
+                <li><a href="http://wiki.famitsu.com/ultrasf4/" target="_blank">『ウルトラストリートファイターIV』まとめwiki</a></li>
+            </ul>
+            <ul class="clearfix">
+            	<li><a href="http://wiki.famitsu.com/terraria/" target="_blank">『テラリア』攻略wiki</a></li>
+            	<li><a href="http://wiki.famitsu.com/breakgakuen/" target="_blank">『激突！ブレイク学園』攻略wiki</a></li>
+            	<li><a href="http://wiki.famitsu.com/pocketkingdom/" target="_blank">『ポケットキングダム（ポケキン）』攻略wiki</a></li>
+            </ul>
+            <ul class="clearfix">
+            	<li><a href="http://wiki.famitsu.com/terrabattle/" target="_blank">『テラバトル』攻略Wiki</a></li>
+            	<li><a href="http://wiki.famitsu.com/freedomwars/" target="_blank">『フリーダムウォーズ』ビギナーズガイド</a></li>
+            	<li><a href="http://wiki.famitsu.com/WatchDogs/" target="_blank">『ウォッチドッグス』攻略Wiki</a></li>
+            </ul>
+                </dd>
+        </dl>
+        <dl>
+                <dt><a href="http://dengekionline.com/" target="_blank">電撃</a>攻略wiki</dt>
+                <dd>
+            <ul class="clearfix">
+            	<li><a href="http://wiki.dengekionline.com/dengekibunko-ftg/" target="_blank">『電撃文庫 FIGHTING CLIMAX（ファイティング クライマックス）』攻略wiki</a></li>
+            	<li><a href="http://wiki.dengekionline.com/shirohime/" target="_blank">『城姫クエスト』攻略wiki</a></li>
+                <li><a href="http://wiki.dengekionline.com/solitiba/" target="_blank">『ソリティ馬』攻略wiki</a></li>
+            </ul>
+            <ul class="clearfix">
+                <li><a href="http://wiki.dengekionline.com/oreshika2/" target="_blank">『俺屍2（俺しか2）』攻略wiki</a></li>	
+            	<li><a href="http://wiki.dengekionline.com/cross-summoner/" target="_blank">『クロスサマナー（クロサマ）』攻略wiki</a></li>
+            	<li><a href="http://wiki.dengekionline.com/sengokux/" target="_blank">『戦国X（センクロ）』攻略wiki</a></li>
+			</ul>
+                </dd>
+    </dl>
+    <dl>
+		<dt><a href="http://www.4gamer.net/" target="_blank">4Gamer</a>攻略wiki</dt>
+		<dd>
+            <ul class="clearfix">
+<li><a href="http://wiki.4gamer.net/ggxrd/" target="_blank">『GUILTY GEAR Xrd』攻略Wiki</a>
+            	<li><a href="http://wiki.4gamer.net/pocketkingdom/" target="_blank">『ポケットキングダム（ポケキン）』攻略ガイド</a></li>
+
+			</ul>
+		</dd>
+    </dl>
+</div>
+
+<div id="site-link-collection">
+	<ul class="clearfix">
+		<li>
+			<dl>
+				<dt>PS3</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/ps3/" target="_blank">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/ps3/" target="_blank">おすすめのゲーム</a></li>
+						<li><a href="http://www.famitsu.com/schedule/ps3/" target="_blank">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/ps3/" target="_blank">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/ps3/" target="_blank">過去に発売したソフト</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps3/" target="_blank">PS3のまとめ</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps3/modelvari.html" target="_blank">PS3本体モデル・種類</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps3/linkage_function.html" target="_blank">PSP・PS Vitaと連携する</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt>PS4</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/ps4/">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/schedule/ps4/">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/ps4/">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/ps4/">過去に発売したソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/ps4/2014/02/22/">本体同時発売ソフト</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps4/shareplay.html">シェアプレイ</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps4/share.html">実況・生配信</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps4/remoteplay.html">リモートプレイ</a></li>
+						<li><a href="http://www.famitsu.com/matome/ps4/launch_etc.html">PS4ロンチ・初週販売台数</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt>PS Vita</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/psv/" target="_blank">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/psv/" target="_blank">おすすめのゲーム</a></li>
+						<li><a href="http://www.famitsu.com/schedule/psv/" target="_blank">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/psv/" target="_blank">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/psv/" target="_blank">過去に発売したソフト</a></li>
+						<li><a href="http://www.famitsu.com/matome/psvita/" target="_blank">PS Vitaのまとめ</a></li>
+						<li><a href="http://www.famitsu.com/matome/psvita/comparison.html" target="_blank">PS Vita 旧型と新型の違い</a></li>
+						<li><a href="http://www.famitsu.com/matome/psvita/vitatv.html" target="_blank">PS Vita TVで遊ぶ</a></li>
+						<li><a href="http://www.famitsu.com/matome/psvita/remoteplay.html" target="_blank">リモートプレイで遊ぶ</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt>3DS / LL</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/3ds/">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/3ds/">おすすめのゲーム</a></li>
+						<li><a href="http://www.famitsu.com/schedule/3ds/">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/3ds/">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/3ds/">過去に発売したソフト</a></li>
+						<li><a href="http://www.famitsu.com/matome/3ds/">3DS / LLのまとめ</a></li>
+						<li><a href="http://www.famitsu.com/matome/3ds/niconico.html">新型3DS / 3DS LL</a></li>
+						<li><a href="http://www.famitsu.com/matome/3ds/color.html">3DS本体の色の種類</a></li>
+						<li><a href="http://www.famitsu.com/matome/3ds/transfer.html">ソフトやデータの移動・引っ越し</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt>PSP</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/psp/" target="_blank">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/psp/" target="_blank">おすすめのゲーム</a></li>
+						<li><a href="http://www.famitsu.com/schedule/psp/" target="_blank">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/psp/" target="_blank">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/psp/" target="_blank">過去に発売したソフト</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl class="last">
+				<dt>DS</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/ds/" target="_blank">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/nds/" target="_blank">おすすめのゲーム</a></li>
+						<li><a href="http://www.famitsu.com/schedule/nds/" target="_blank">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/nds/" target="_blank">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/nds/" target="_blank">過去に発売したソフト</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+	</ul>
+	<ul class="clearfix">
+		<li>
+			<dl>
+				<dt>Wii / Wii U</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/wiiu/" target="_blank">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/wii/" target="_blank">おすすめのゲーム Wii</a></li>
+						<li><a href="http://www.famitsu.com/review/wiiu/" target="_blank">おすすめのゲーム Wii U</a></li>
+						<li><a href="http://www.famitsu.com/schedule/wii/" target="_blank">ゲーム発売予定 Wii</a></li>
+						<li><a href="http://www.famitsu.com/schedule/wiiu/" target="_blank">ゲーム発売予定 Wii U</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/wii/" target="_blank">新作・発売中ソフト wii</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/wiiu/" target="_blank">新作・発売中ソフト wii U</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/wii/" target="_blank">過去に発売したソフト wii</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/wiiu/" target="_blank">過去に発売したソフト wii U</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt>Xbox 360</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/xbox360" target="_blank">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/review/x360/" target="_blank">おすすめのゲーム</a></li>
+						<li><a href="http://www.famitsu.com/schedule/x360/" target="_blank">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/x360/" target="_blank">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/x360/" target="_blank">過去に発売したソフト</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt>Xbox One</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/news/xboxone">最新ゲーム情報</a></li>
+						<li><a href="http://www.famitsu.com/schedule/xboxone/">ゲーム発売予定</a></li>
+						<li><a href="http://www.famitsu.com/schedule/recent/xboxone/">新作・発売中ソフト</a></li>
+						<li><a href="http://www.famitsu.com/schedule/calendar/xboxone/">過去に発売したソフト</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt class="other">サービス</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/blog/" target="_blank">ブログ</a></li>
+						<li><a href="http://www.famitsu.com/biz/" target="_blank">ビジネス</a></li>
+						<li><a href="http://www.famitsu.com/guc/" target="_blank">コミュニティ（コミニー）</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl class="last">
+				<dt class="other">その他</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com/docs/sitemap.html" target="_blank">サイトマップ</a></li>
+						<li><a href="http://www.famitsu.com/docs/" target="_blank">インフォメーション</a></li>
+						<li><a href="http://www.famitsu.com/docs/info.html" target="_blank">お問い合わせ</a></li>
+						<li><a href="http://www.famitsu.com/docs/privacypolicy.html" target="_blank">プライバシーポリシー</a></li>
+						<li><a href="http://www.famitsu.com/docs/useragreement.html" target="_blank">利用条件・免責</a></li>
+						<li><a href="http://www.famitsu.com/docs/aboutcookie.html" target="_blank">cookie情報について</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+		<li>
+			<dl>
+				<dt class="other">各誌 / 各媒体</dt>
+				<dd>
+					<ul class="menu">
+						<li><a href="http://www.famitsu.com//famiweb/" target="_blank">週刊ファミ通</a></li>
+						<li><a href="http://www.famitsu.com//xbox/" target="_blank">ファミ通Xbox360</a></li>
+						<li><a href="http://www.famitsu.com//dswii/" target="_blank">ファミ通DS+Wii</a></li>
+						<li><a href="http://www.coneon.com/" target="_blank">ファミ通Connect! On</a></li>
+						<li><a href="http://www.famitsu.com//fb/" target="_blank">ファミ通文庫 - FB Online</a></li>
+						<li><a href="http://www.eb832.com/" target="_blank">ファミ通TV</a></li>
+						<li><a href="http://www.enterbrain.co.jp/fdp/" target="_blank">ファミ通の電子書籍</a></li>
+						<li><a href="http://app.famitsu.com/" target="_blank">ファミ通App</a></li>
+						<li><a href="http://www.famitsu.com/comic_clear/" target="_blank">ファミ通コミッククリア</a></li>
+					</ul>
+				</dd>
+			</dl>
+		</li>
+	</ul>
+</div>
+<p id="copyright" class="footer-wrap">FAMITSU.com (C)KADOKAWA CORPORATION 2014</p>
+<p class="footer-wrap">ファミ通.comに使用されている画像を無断で転載、加工などを行った場合、処罰の対象となることがございます。</p>                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <!-- ここから ソーシャルボタン用のscript-->
+<div id="fb-root"></div>
+<script>(function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0];if (d.getElementById(id)) return;js = d.createElement(s); js.id = id; js.async = true; js.src = "//connect.facebook.net/ja_JP/all.js#xfbml=1&appId="; fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk'));</script>
+<script type="text/javascript" src="http://b.st-hatena.com/js/bookmark_button.js" charset="utf-8" async="async"></script>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'ja'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id; js.async = true; js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script>
+<!-- ここまで ソーシャルボタン用のscript-->
+                    </body>
+</html>
